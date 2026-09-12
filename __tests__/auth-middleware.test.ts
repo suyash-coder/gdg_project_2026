@@ -11,7 +11,8 @@ jest.mock("@/lib/supabase/server", () => ({
 }));
 
 describe("Auth Middleware", () => {
-  let mockSupabase: unknown;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockSupabase: any;
 
   beforeEach(() => {
     jest.resetAllMocks();

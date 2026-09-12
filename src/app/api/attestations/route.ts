@@ -13,6 +13,7 @@ import { requireAuth } from "@/lib/supabase/middleware";
 import { createAttestationSchema } from "@/lib/validation/schemas";
 import { attestationLimiter, getClientIp } from "@/lib/rate-limit";
 import type { NextRequest } from "next/server";
+import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   // Rate limit
@@ -56,6 +57,27 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Verify the token
+  const tokenHash = crypto.createHash("sha256").update(parsed.data.token).digest("hex");
+  const { data: tokenRecord, error: tokenError } = await supabase
+    .from("verification_tokens")
+    .select("id, consumed_at, expires_at")
+    .eq("job_id", parsed.data.job_id)
+    .eq("token_hash", tokenHash)
+    .single();
+
+  if (tokenError || !tokenRecord) {
+    return Response.json({ error: "Invalid token" }, { status: 400 });
+  }
+
+  if (tokenRecord.consumed_at) {
+    return Response.json({ error: "Token already consumed" }, { status: 400 });
+  }
+
+  if (new Date(tokenRecord.expires_at) < new Date()) {
+    return Response.json({ error: "Token expired" }, { status: 400 });
+  }
+
   // Check if attestation already exists (belt + suspenders with UNIQUE constraint)
   const { data: existing } = await supabase
     .from("customer_attestations")
@@ -91,6 +113,12 @@ export async function POST(request: NextRequest) {
     }
     return Response.json({ error: error.message }, { status: 500 });
   }
+
+  // Consume the token
+  await supabase
+    .from("verification_tokens")
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("id", tokenRecord.id);
 
   return Response.json({ data }, { status: 201 });
 }

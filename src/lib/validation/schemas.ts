@@ -79,7 +79,10 @@ export const createAttestationSchema = z.object({
   job_id: z.string().uuid(),
   status: z.enum(["approved", "rejected"]),
   comment: z.string().max(1000).optional(),
+  token: z.string().min(10, "Token is required"),
 });
+
+
 
 // ── Dispute ─────────────────────────────────────────────────────────
 
@@ -115,7 +118,7 @@ export const uploadMediaSchema = z.object({
 // ── Photo consent ───────────────────────────────────────────────────
 
 export const createPhotoConsentSchema = z.object({
-  job_id: z.string().uuid(),
+  consent: z.boolean(),
 });
 
 // ── Pagination ──────────────────────────────────────────────────────

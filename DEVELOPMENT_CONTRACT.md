@@ -18,7 +18,7 @@ We use Supabase Auth with cookie-based sessions via `@supabase/ssr`.
 - `POST /api/auth/login` - Body: `{ email, password }`
 - `POST /api/auth/logout`
 
-*Note: The `role` is automatically set to `'worker'` on signup via a database trigger. Roles cannot be set from the client.*
+*Note: The `role` is automatically set to `'worker'` on signup via a database trigger (`fn_handle_new_user`). There is no client-accessible route to become a customer. To handle customer role assignment, use the Admin API (see section 3).*
 
 ## 2. API Conventions
 
@@ -44,12 +44,19 @@ Workers create jobs. Customers are associated later.
 
 ### Attestations (Customer Only)
 Customers approve or reject completed jobs.
-- `POST /api/attestations` - Submit an attestation. Enforces:
+- `POST /api/attestations` - Submit an attestation. Body: `{ job_id, status, comment, token }`. Enforces:
   1. Requester is the customer of the job.
   2. The job does not already have an attestation.
+  3. The `token` provided matches an unconsumed verification token for this job. On success, the token's `consumed_at` is set, rejecting further use.
 - `GET /api/attestations` - List attestations related to your jobs.
 
 *Reputation Score:* Calculated automatically by a database trigger counting `approved` attestations.
+
+### Verification Tokens & Photo Consent
+- `POST /api/jobs/[id]/verification-token` - (Worker Only). Generates a random 32-byte token for a job, stores its SHA-256 hash, and returns the raw token to the worker.
+- `GET /api/verify/[token]` - (Public/Customer). Hashes the token and looks it up. Returns job and worker details if valid and not yet consumed. *Does not consume the token or require a session.*
+- `POST /api/jobs/[id]/photo-consent` - (Customer Only). Body: `{ consent: boolean }`. Grants or revokes permission to display evidence publicly.
+  - *Note:* Photo publication consent is strictly independent of attestation. A job can reach `CUSTOMER_ATTESTED` (and public display of metadata) with photo consent = `false`, keeping evidence strictly private.
 
 ### Storage & Private Evidence
 All photos, videos, and documents are stored in the private `evidence` bucket.
@@ -57,7 +64,7 @@ All photos, videos, and documents are stored in the private `evidence` bucket.
 - `POST /api/storage/signed-url` - Body: `{ media_id }`. Returns a time-limited URL if the requester is a participant of the job.
 
 ### Admin Actions
-- `POST /api/admin/change-role` - Requires an admin user. Body: `{ user_id, role }`.
+- `POST /api/admin/change-role` - Requires an admin user session (`requireRole('admin')`). Body: `{ user_id, role }`. Updates the target user's role server-side. Non-admins cannot self-escalate via this route. This is necessary because signups default to `worker`.
 
 ## 4. Security Rules & Assumptions
 

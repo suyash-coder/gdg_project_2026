@@ -140,6 +140,7 @@ describe("createAttestationSchema", () => {
       job_id: "550e8400-e29b-41d4-a716-446655440000",
       status: "approved",
       comment: "Great work!",
+      token: "valid_random_token",
     });
     expect(result.success).toBe(true);
   });
@@ -148,6 +149,7 @@ describe("createAttestationSchema", () => {
     const result = createAttestationSchema.safeParse({
       job_id: "550e8400-e29b-41d4-a716-446655440000",
       status: "invalid_status",
+      token: "valid_random_token",
     });
     expect(result.success).toBe(false);
   });
@@ -156,6 +158,7 @@ describe("createAttestationSchema", () => {
     const result = createAttestationSchema.safeParse({
       job_id: "not-a-uuid",
       status: "approved",
+      token: "valid_random_token",
     });
     expect(result.success).toBe(false);
   });

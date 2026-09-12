@@ -89,7 +89,7 @@ CREATE TABLE verification_tokens (
   job_id      uuid NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
   token_hash  text NOT NULL,
   expires_at  timestamptz NOT NULL,
-  used_at     timestamptz,
+  consumed_at timestamptz,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 

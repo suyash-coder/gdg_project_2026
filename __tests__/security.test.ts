@@ -87,7 +87,7 @@ describe("Security Scenarios", () => {
 
       const req = new NextRequest("http://localhost/api/admin/change-role", {
         method: "POST",
-        body: JSON.stringify({ user_id: "00000000-0000-0000-0000-000000000001", role: "admin" }),
+        body: JSON.stringify({ user_id: "123e4567-e89b-12d3-a456-426614174001", role: "admin" }),
       });
 
       const response = await changeRole(req);
@@ -100,15 +100,15 @@ describe("Security Scenarios", () => {
     it("allows admin to change roles", async () => {
       // Mock requireRole to accept (simulate admin)
       (requireRole as jest.Mock).mockResolvedValue({
-        user: { id: "00000000-0000-0000-0000-000000000002" },
+        user: { id: "123e4567-e89b-12d3-a456-426614174002" },
         profile: { role: "admin" }
       });
 
-      (mockAdmin.single as jest.Mock).mockResolvedValue({ data: { id: "00000000-0000-0000-0000-000000000001", role: "admin" }, error: null });
+      (mockAdmin.single as jest.Mock).mockResolvedValue({ data: { id: "123e4567-e89b-12d3-a456-426614174001", role: "admin" }, error: null });
 
       const req = new NextRequest("http://localhost/api/admin/change-role", {
         method: "POST",
-        body: JSON.stringify({ user_id: "00000000-0000-0000-0000-000000000001", role: "admin" }),
+        body: JSON.stringify({ user_id: "123e4567-e89b-12d3-a456-426614174001", role: "admin" }),
       });
 
       const response = await changeRole(req);
@@ -150,7 +150,13 @@ describe("Security Scenarios", () => {
         error: null
       });
 
-      // Second query: check for existing attestation (simulating one exists)
+      // Second query: verify token
+      (mockSupabase.single as jest.Mock).mockResolvedValueOnce({
+        data: { id: "token-1", consumed_at: null, expires_at: new Date(Date.now() + 10000).toISOString() },
+        error: null
+      });
+
+      // Third query: check for existing attestation (simulating one exists)
       (mockSupabase.maybeSingle as jest.Mock).mockResolvedValueOnce({
         data: { id: "00000000-0000-0000-0000-000000000020" },
         error: null
@@ -158,7 +164,7 @@ describe("Security Scenarios", () => {
 
       const req = new NextRequest("http://localhost/api/attestations", {
         method: "POST",
-        body: JSON.stringify({ job_id: "00000000-0000-0000-0000-000000000010", status: "approved" }),
+        body: JSON.stringify({ job_id: "55555555-5555-4555-8555-555555555555", status: "approved", token: "valid-token" }),
       });
 
       const response = await createAttestation(req);
@@ -182,7 +188,7 @@ describe("Security Scenarios", () => {
 
       const req = new NextRequest("http://localhost/api/attestations", {
         method: "POST",
-        body: JSON.stringify({ job_id: "00000000-0000-0000-0000-000000000010", status: "approved" }),
+        body: JSON.stringify({ job_id: "55555555-5555-4555-8555-555555555555", status: "approved", token: "valid-token" }),
       });
 
       const response = await createAttestation(req);
