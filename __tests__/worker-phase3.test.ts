@@ -11,15 +11,15 @@ import { generateCustomerVerification } from "@/lib/verification/verification-ad
 import type { VerificationErrorKind } from "@/lib/verification/verification-adapter";
 
 describe("Customer Verification Handoff (Phase 3)", () => {
-  it("verification adapter returns honest endpoint_unavailable error", async () => {
-    // Tests that we do not fabricate tokens or claim success
+  it("verification adapter handles network failure gracefully", async () => {
+    // Tests that we handle fetch failure when endpoint is not mocked
     const result = await generateCustomerVerification("valid-job-id");
     
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.kind).toBe("endpoint_unavailable");
+      expect(result.error.kind).toBe("network_failure");
       expect(result.error.retryable).toBe(true);
-      expect(result.error.message).toMatch(/not yet available/i);
+      expect(result.error.message).toMatch(/Network error/i);
     }
   });
 

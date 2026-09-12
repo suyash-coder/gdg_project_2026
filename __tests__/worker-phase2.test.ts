@@ -348,10 +348,10 @@ describe("Upload adapter — uploadJobEvidence", () => {
       mimeType: "image/jpeg",
     };
     const result = await uploadJobEvidence(req);
-    // Endpoint not yet available — honest stub
+    // Endpoint is now real, so unmocked fetch in Jest throws network failure
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.kind).toBe("upload_endpoint_unavailable");
+      expect(result.error.kind).toBe("network_failure");
       expect(result.error.retryable).toBe(true);
       expect(result.error.message).toBeTruthy();
     }

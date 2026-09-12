@@ -49,26 +49,6 @@ import type {
 async function _callMediaUploadEndpoint(
   req: EvidenceUploadRequest
 ): Promise<UploadResult> {
-  // ── STUB: endpoint not yet available ──────────────────────────────
-  // This is an honest "not yet" — we do NOT pretend success.
-  // When Worker 1 delivers the endpoint, replace this block with the
-  // actual fetch() call (example shown in comment below).
-  void req; // suppress unused-variable warning during stub period
-
-  const unavailable: EvidenceError = {
-    kind: "upload_endpoint_unavailable",
-    message:
-      "Evidence upload is not yet available. " +
-      "Worker 1 must implement POST /api/jobs/[id]/media. " +
-      "Your photos have been processed and hashed locally. " +
-      "Please try again when the backend is ready.",
-    retryable: true,
-  };
-  return { ok: false, error: unavailable };
-
-  /*
-  ── Future implementation (replace stub above when endpoint exists) ──
-
   const formData = new FormData();
   formData.append("file", req.file, `evidence-${req.evidenceType}.jpg`);
   formData.append("media_type", "photo");
@@ -107,7 +87,6 @@ async function _callMediaUploadEndpoint(
 
   const json = await res.json();
   return { ok: true, mediaId: json.data.id };
-  */
 }
 
 /**

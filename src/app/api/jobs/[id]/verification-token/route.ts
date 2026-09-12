@@ -45,8 +45,10 @@ export async function POST(
   const rawToken = crypto.randomBytes(32).toString("base64url");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-  // Store only the hash in the database
-  const { error: insertError } = await supabase
+  // Store only the hash in the database using the admin client (RLS denies all for regular clients)
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const adminClient = createAdminClient();
+  const { error: insertError } = await adminClient
     .from("verification_tokens")
     .insert({
       job_id: jobId,

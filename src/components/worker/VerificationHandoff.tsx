@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { generateCustomerVerification } from "@/lib/verification/verification-adapter";
 
 interface VerificationHandoffProps {
@@ -113,12 +114,8 @@ export default function VerificationHandoff({ jobId }: VerificationHandoffProps)
             the completed job from their own account.
           </p>
 
-          {/* QR Code Placeholder (since no dependency is approved) */}
           <div style={styles.qrContainer}>
-            <div style={styles.qrPlaceholder}>
-              [ QR Code Placeholder ]<br />
-              <span style={{ fontSize: "11px", fontWeight: "normal" }}>Awaiting dependency approval</span>
-            </div>
+            <QRCodeSVG value={url} size={142} />
           </div>
 
           <div style={styles.urlBox}>

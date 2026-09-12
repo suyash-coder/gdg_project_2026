@@ -56,26 +56,9 @@ export async function generateCustomerVerification(
     };
   }
 
-  // ── STUB: endpoint not yet available ──────────────────────────────
-  // This is an honest "not yet". We do NOT pretend success or fabricate URLs.
-  // When Worker 1 delivers the endpoint, replace this block with the fetch call.
-  return {
-    ok: false,
-    error: {
-      kind: "endpoint_unavailable",
-      message:
-        "Customer verification generation is not yet available. " +
-        "Worker 1 must implement POST /api/jobs/[id]/verification.",
-      retryable: true,
-    },
-  };
-
-  /*
-  ── Future implementation (replace stub above when endpoint exists) ──
-
   let res: Response;
   try {
-    res = await fetch(`/api/jobs/${jobId}/verification`, {
+    res = await fetch(`/api/jobs/${jobId}/verification-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     });
@@ -104,10 +87,11 @@ export async function generateCustomerVerification(
   }
 
   const json = await res.json();
+  const url = `${window.location.origin}/customer/verify/${json.data.token}`;
+  
   return {
     ok: true,
-    url: json.data.url,
-    expiresAt: json.data.expires_at,
+    url: url,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7).toISOString(),
   };
-  */
 }
