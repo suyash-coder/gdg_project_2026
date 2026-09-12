@@ -44,7 +44,7 @@ describe("Phase 5 Integration: URL Generation", () => {
     // In Jest environment without window (or pretending it's undefined), it should return empty
     // But Jest has jsdom by default usually. Let's mock window temporarily.
     const originalWindow = global.window;
-    // @ts-ignore
+    // @ts-expect-error Mocking window deletion for testing
     delete global.window;
     
     expect(getAbsolutePublicProfileUrl("test-worker-123")).toBe("");
