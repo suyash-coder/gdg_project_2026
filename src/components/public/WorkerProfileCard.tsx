@@ -93,24 +93,42 @@ export function WorkerProfileCard({ profile }: WorkerProfileCardProps) {
         </div>
       </div>
 
-      {/* Reputation */}
+      {/* Reputation Stats */}
       <div
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 16px",
-          background: "#f0fdf4",
-          border: "1px solid #bbf7d0",
-          borderRadius: 999,
-          marginBottom: 24,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: 12,
+          marginBottom: 28,
         }}
       >
-        <span style={{ fontSize: 18 }} aria-hidden>⭐</span>
-        <span style={{ fontWeight: 600, color: "#15803d", fontSize: 15 }}>
-          {profile.reputation_score} verified job
-          {profile.reputation_score !== 1 ? "s" : ""} attested
-        </span>
+        {/* Average Rating */}
+        <div style={statCardStyle}>
+          <div style={statValueStyle}>
+            {profile.average_rating === null || profile.average_rating === undefined 
+              ? "—" 
+              : profile.average_rating}
+            <span style={{ fontSize: 18, color: "#fbbf24", marginLeft: 4 }}>★</span>
+          </div>
+          <div style={statLabelStyle}>Average Rating</div>
+          <div style={statSubStyle}>
+            {profile.rating_count === 0 ? "No ratings yet" : `${profile.rating_count} ratings`}
+          </div>
+        </div>
+
+        {/* Attested Reputation */}
+        <div style={statCardStyle}>
+          <div style={statValueStyle}>{profile.reputation_score}</div>
+          <div style={statLabelStyle}>Attested Reputation</div>
+          <div style={statSubStyle}>Customer-verified</div>
+        </div>
+
+        {/* Repeat Customers */}
+        <div style={statCardStyle}>
+          <div style={statValueStyle}>{profile.repeat_customers || 0}</div>
+          <div style={statLabelStyle}>Repeat Customers</div>
+          <div style={statSubStyle}>Hired 2+ times</div>
+        </div>
       </div>
 
       {/* Bio */}
@@ -165,3 +183,36 @@ export function WorkerProfileCard({ profile }: WorkerProfileCardProps) {
     </article>
   );
 }
+
+const statCardStyle: React.CSSProperties = {
+  padding: "16px",
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+  borderRadius: 12,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  textAlign: "center",
+};
+
+const statValueStyle: React.CSSProperties = {
+  fontSize: 26,
+  fontWeight: 700,
+  color: "#1e293b",
+  display: "flex",
+  alignItems: "center",
+  lineHeight: 1,
+};
+
+const statLabelStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 600,
+  color: "#475569",
+  marginTop: 8,
+};
+
+const statSubStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: "#94a3b8",
+  marginTop: 2,
+};

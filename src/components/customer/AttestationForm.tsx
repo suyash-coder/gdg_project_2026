@@ -32,6 +32,7 @@ export function AttestationForm({ jobId, rawToken, onSuccess }: AttestationFormP
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [verdict, setVerdict] = useState<AttestationStatus>("approved");
+  const [rating, setRating] = useState<number>(0);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,12 +41,22 @@ export function AttestationForm({ jobId, rawToken, onSuccess }: AttestationFormP
     const fd = new FormData(e.currentTarget);
     const status = (fd.get("status") as AttestationStatus) ?? "approved";
     const comment = (fd.get("comment") as string | null)?.trim() || undefined;
+    const review = (fd.get("review") as string | null)?.trim() || undefined;
+    const ratingValue = fd.get("rating") ? parseInt(fd.get("rating") as string, 10) : undefined;
+
+    if (status === "approved" && (!ratingValue || ratingValue < 1 || ratingValue > 5)) {
+      setErrorMsg("Please select a 1-5 star rating.");
+      setPhase("error");
+      return;
+    }
 
     const result = await submitAttestation({
       jobId,
       token: rawToken,
       status,
-      comment,
+      comment: status === "rejected" ? comment : undefined,
+      review: status === "approved" ? review : undefined,
+      rating: status === "approved" ? ratingValue : undefined,
     });
 
     if (result.ok) {
@@ -163,10 +174,49 @@ export function AttestationForm({ jobId, rawToken, onSuccess }: AttestationFormP
           </label>
         </fieldset>
 
-        {/* Comment */}
+        {/* Rating (only for approval) */}
+        {verdict === "approved" && (
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#374151",
+                marginBottom: 6,
+              }}
+            >
+              Rating <span style={{ color: "#e11d48" }}>*</span>
+            </label>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    fontSize: 32,
+                    lineHeight: 1,
+                    color: rating >= star ? "#fbbf24" : "#e2e8f0",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <input type="hidden" name="rating" value={rating || ""} />
+          </div>
+        )}
+
+        {/* Comment / Review */}
         <div style={{ marginBottom: 16 }}>
           <label
-            htmlFor="attest-comment"
+            htmlFor={verdict === "approved" ? "attest-review" : "attest-comment"}
             style={{
               display: "block",
               fontSize: 13,
@@ -175,12 +225,12 @@ export function AttestationForm({ jobId, rawToken, onSuccess }: AttestationFormP
               marginBottom: 6,
             }}
           >
-            Comment{" "}
+            {verdict === "approved" ? "Review" : "Comment"}{" "}
             <span style={{ color: "#94a3b8", fontWeight: 400 }}>(optional, max 1000 chars)</span>
           </label>
           <textarea
-            id="attest-comment"
-            name="comment"
+            id={verdict === "approved" ? "attest-review" : "attest-comment"}
+            name={verdict === "approved" ? "review" : "comment"}
             maxLength={1000}
             rows={3}
             disabled={phase === "submitting"}
@@ -195,7 +245,7 @@ export function AttestationForm({ jobId, rawToken, onSuccess }: AttestationFormP
               resize: "vertical",
               fontFamily: "inherit",
             }}
-            placeholder="Describe the work outcome, quality, or any issues…"
+            placeholder={verdict === "approved" ? "Describe your experience working with this professional…" : "Describe why you are rejecting this work…"}
           />
         </div>
 

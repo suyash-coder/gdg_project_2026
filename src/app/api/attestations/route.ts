@@ -98,6 +98,8 @@ export async function POST(request: NextRequest) {
       job_id: parsed.data.job_id,
       customer_id: authResult.id,
       status: parsed.data.status,
+      rating: parsed.data.rating ?? null,
+      review: parsed.data.review ?? null,
       comment: parsed.data.comment ?? null,
     })
     .select()

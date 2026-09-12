@@ -26,7 +26,7 @@ export async function getPublicProfile(
 
   const { data, error } = await supabase
     .from("public_profiles")
-    .select("id, display_name, bio, avatar_url, city, reputation_score")
+    .select("id, display_name, bio, avatar_url, city, reputation_score, average_rating, rating_count, repeat_customers")
     .eq("id", workerId)
     .maybeSingle();
 

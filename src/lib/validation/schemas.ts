@@ -78,6 +78,8 @@ export const JOB_PROTECTED_FIELDS = [
 export const createAttestationSchema = z.object({
   job_id: z.string().uuid(),
   status: z.enum(["approved", "rejected"]),
+  rating: z.number().int().min(1).max(5).optional(),
+  review: z.string().max(1000).optional(),
   comment: z.string().max(1000).optional(),
   token: z.string().min(10, "Token is required"),
 });

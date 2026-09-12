@@ -21,6 +21,8 @@ export interface SubmitAttestationInput {
   token: string;
   status: AttestationStatus;
   comment?: string;
+  rating?: number;
+  review?: string;
 }
 
 /**
@@ -40,6 +42,8 @@ export async function submitAttestation(
         token: input.token,
         status: input.status,
         comment: input.comment,
+        rating: input.rating,
+        review: input.review,
       }),
     });
 

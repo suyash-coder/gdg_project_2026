@@ -20,6 +20,9 @@ const mockProfile: PublicProfile = {
   avatar_url: null,
   city: "Mumbai",
   reputation_score: 3,
+  average_rating: 4.5,
+  rating_count: 2,
+  repeat_customers: 1,
 };
 
 describe("getPublicProfile", () => {

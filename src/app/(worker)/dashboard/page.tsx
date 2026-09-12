@@ -117,8 +117,7 @@ export default async function DashboardPage() {
       <div style={styles.statsRow}>
         <div style={styles.statCard}>
           <span style={styles.statNumber}>{profile.reputation_score}</span>
-          <span style={styles.statLabel}>Reputation</span>
-          <span style={styles.statNote}>(customer-attested)</span>
+          <span style={styles.statLabel}>Attested Reputation</span>
         </div>
         <div style={styles.statCard}>
           <span style={styles.statNumber}>{approvedAttestations.length}</span>
@@ -130,21 +129,23 @@ export default async function DashboardPage() {
         </div>
       </div>
       
-      {/* Extended Reputation Metrics — Missing from Backend */}
       <div style={styles.extendedStatsRow}>
-        <div style={styles.unavailableStatCard}>
-          <span style={styles.unavailableIcon}>—</span>
+        <div style={styles.statCard}>
+          <span style={styles.statNumber}>
+            {profile.average_rating === null || profile.average_rating === undefined 
+              ? "—" 
+              : profile.average_rating}
+          </span>
           <span style={styles.statLabel}>Average Rating</span>
-          <span style={styles.unavailableNote}>Not provided by backend</span>
+          <span style={styles.statNote}>
+            {profile.rating_count === 0 ? "No ratings yet" : `${profile.rating_count} ratings`}
+          </span>
         </div>
-        <div style={styles.unavailableStatCard}>
-          <span style={styles.unavailableIcon}>—</span>
+        <div style={styles.statCard}>
+          <span style={styles.statNumber}>{profile.repeat_customers || 0}</span>
           <span style={styles.statLabel}>Repeat Customers</span>
-          <span style={styles.unavailableNote}>Not provided by backend</span>
         </div>
-      </div>
-
-      {/* Phase 5 Integration: Share Profile Controls */}
+      </div>      {/* Phase 5 Integration: Share Profile Controls */}
       <ShareProfile workerId={profile.id} />
 
       {/* Recent jobs */}

@@ -15,7 +15,7 @@ export async function generateDigitalCV(workerId: string): Promise<Blob> {
   // Fetch public profile data ONLY
   const { data, error } = await supabase
     .from("public_profiles")
-    .select("id, display_name, bio, city, reputation_score")
+    .select("id, display_name, bio, city, reputation_score, average_rating, rating_count, repeat_customers")
     .eq("id", workerId)
     .single();
 
@@ -52,7 +52,17 @@ export async function generateDigitalCV(workerId: string): Promise<Blob> {
 
   // Reputation
   if (profile.reputation_score !== undefined) {
-    doc.text(`Reputation Score: ${profile.reputation_score}`, margin, y);
+    doc.text(`Attested Jobs: ${profile.reputation_score}`, margin, y);
+    y += 8;
+  }
+  
+  if (profile.average_rating !== undefined && profile.average_rating !== null) {
+    doc.text(`Average Rating: ${profile.average_rating} (${profile.rating_count} ratings)`, margin, y);
+    y += 8;
+  }
+
+  if (profile.repeat_customers !== undefined) {
+    doc.text(`Repeat Customers: ${profile.repeat_customers}`, margin, y);
     y += 12;
   }
 

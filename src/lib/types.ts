@@ -40,6 +40,9 @@ export interface Profile {
   city: string | null;
   is_public: boolean;
   reputation_score: number;
+  average_rating: number | null;
+  rating_count: number;
+  repeat_customers: number;
   created_at: string; // ISO timestamp
   updated_at: string;
 }
@@ -151,6 +154,9 @@ export interface PublicProfile {
   avatar_url: string | null;
   city: string | null;
   reputation_score: number;
+  average_rating: number | null;
+  rating_count: number;
+  repeat_customers: number;
 }
 
 // ── API response envelope ───────────────────────────────────────────
