@@ -11,7 +11,7 @@
  * parent camera hook can store it internally.
  */
 
-import { useRef, useEffect } from "react";
+
 
 interface CameraVideoProps {
   onReady: (el: HTMLVideoElement | null) => void;
@@ -19,19 +19,9 @@ interface CameraVideoProps {
 }
 
 export default function CameraVideo({ onReady, style }: CameraVideoProps) {
-  const ref = useRef<HTMLVideoElement>(null);
-
-  // Fire onReady after mount so the parent hook can record the element
-  useEffect(() => {
-    onReady(ref.current);
-    return () => {
-      onReady(null);
-    };
-  }, [onReady]);
-
   return (
     <video
-      ref={ref}
+      ref={onReady}
       autoPlay
       playsInline
       muted

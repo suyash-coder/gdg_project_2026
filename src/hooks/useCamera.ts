@@ -51,6 +51,10 @@ export function useCamera(): UseCameraReturn {
   // Handler called by CameraVideo after the element mounts
   const onVideoReady = useCallback((el: HTMLVideoElement | null) => {
     videoRef.current = el;
+    if (el && streamRef.current && el.srcObject !== streamRef.current) {
+      el.srcObject = streamRef.current;
+      el.play().catch(() => {});
+    }
   }, []);
 
   // Stop all tracks and release camera
