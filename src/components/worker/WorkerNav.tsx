@@ -25,6 +25,9 @@ export default function WorkerNav() {
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
+    if (!window.confirm("Are you sure you want to log out?")) {
+      return;
+    }
     setLoggingOut(true);
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" });

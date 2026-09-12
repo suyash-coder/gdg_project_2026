@@ -35,9 +35,13 @@ export default async function DashboardPage() {
   const supabase = await createClient();
 
   // Fetch profile — RLS guarantees this is the authenticated user's row
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Fetch profile — explicitly scoping to the authenticated user's ID
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select("*")
+    .eq("id", user?.id || "")
     .single();
 
   // Fetch recent jobs — RLS-scoped to this worker
@@ -60,7 +64,7 @@ export default async function DashboardPage() {
   if (profileError || !profile) {
     return (
       <div style={styles.container}>
-        <p style={styles.errorText}>Could not load profile. Please try again.</p>
+        <p style={styles.errorText}>Could not load profile. Please try again. ({profileError?.message || 'No profile'})</p>
       </div>
     );
   }

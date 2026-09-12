@@ -16,9 +16,12 @@ export const metadata = { title: "My Profile — WorkProof" };
 
 export default async function ProfilePage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
+    .eq("id", user?.id || "")
     .single();
 
   const profile = data as Profile | null;
