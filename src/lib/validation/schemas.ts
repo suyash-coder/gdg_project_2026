@@ -115,6 +115,8 @@ export const uploadMediaSchema = z.object({
   job_id: z.string().uuid(),
   media_type: z.enum(["photo", "video", "document"]),
   caption: z.string().max(500).optional(),
+  sha256: z.string().length(64).optional(),
+  perceptual_hash: z.string().min(1).max(256).optional(),
 });
 
 // ── Photo consent ───────────────────────────────────────────────────

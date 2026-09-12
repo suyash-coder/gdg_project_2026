@@ -57,11 +57,15 @@ export async function POST(
 
   const mediaType = formData.get("media_type") as string;
   const caption = formData.get("caption") as string | undefined;
+  const sha256 = formData.get("sha256") as string | undefined;
+  const perceptualHash = formData.get("perceptual_hash") as string | undefined;
 
   const parsed = uploadMediaSchema.safeParse({
     job_id: jobId,
     media_type: mediaType,
     caption: caption || undefined,
+    sha256: sha256 || undefined,
+    perceptual_hash: perceptualHash || undefined,
   });
 
   if (!parsed.success) {
@@ -99,6 +103,8 @@ export async function POST(
       media_type: parsed.data.media_type,
       storage_path: storagePath,
       caption: parsed.data.caption,
+      sha256: parsed.data.sha256,
+      perceptual_hash: parsed.data.perceptual_hash,
     })
     .select()
     .single();
