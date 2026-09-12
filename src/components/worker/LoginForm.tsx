@@ -225,7 +225,9 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     padding: "12px 14px",
     fontSize: "16px", // 16px prevents iOS zoom
-    border: "1px solid var(--border)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border)",
     borderRadius: "var(--radius)",
     background: "var(--background)",
     color: "var(--foreground)",
