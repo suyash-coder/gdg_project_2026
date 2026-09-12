@@ -126,7 +126,7 @@ export default async function CustomerDashboardPage() {
               ✅ You are logged in as a <strong>Customer</strong>
             </p>
             <p style={{ margin: "6px 0 0", fontSize: 13, color: "#3b82f6" }}>
-              You can verify jobs and (after full checkpoint) submit attestations.
+              You can verify jobs and submit attestations using a worker&apos;s verification link.
             </p>
           </div>
         ) : (

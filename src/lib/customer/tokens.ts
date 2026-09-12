@@ -1,75 +1,100 @@
 /**
  * Verification token resolver.
  *
- * ════════════════════════════════════════════════════════════════════
- * CONTRACT GAP: No token resolution endpoint is defined in
- * DEVELOPMENT_CONTRACT.md. The `verification_tokens` table has a
- * `deny_all` RLS policy — it is accessible only via the service-role
- * admin client. Person 1 needs to expose:
+ * Calls GET /api/verify/[token] per DEVELOPMENT_CONTRACT.md.
+ * The endpoint uses the admin client to bypass `deny_all` RLS on
+ * verification_tokens. No session is required to call it.
  *
- *   GET /api/verify/[token]
- *   → { data: { status: 'valid', job: Job } }
- *   → { data: { status: 'consumed', used_at: string } }
- *   → { error: 'Token not found or expired' }  (400/404)
- *
- * ════════════════════════════════════════════════════════════════════
- * INTEGRATION POINT: When Person 1 exposes the endpoint, replace the
- * mock body of `resolveToken` below with:
- *
- *   const res = await fetch(`/api/verify/${encodeURIComponent(token)}`);
- *   const json = await res.json();
- *   if (!res.ok) return { status: 'invalid', reason: json.error };
- *   return json.data as TokenState;
- *
- * No other file needs to change.
- * ════════════════════════════════════════════════════════════════════
- *
- * Mock tokens for UI testing (these simulate seed data):
- *   "demo-valid"     → valid token, shows a completed plumbing job
- *   "demo-consumed"  → token already used
- *   anything else    → invalid / not found / expired
+ * Response shapes from Person 1's implementation:
+ *   200 → { data: { job: { id, title, description, status, profiles!worker_id } } }
+ *   400 → { error: "Token already consumed" }
+ *   400 → { error: "Token expired" }
+ *   404 → { error: "Invalid token" }
+ *   429 → rate limited
  */
 
 import type { Job } from "@/lib/types";
 
 // ── Result type ───────────────────────────────────────────────────────────────
 
+// Worker info is joined from profiles via profiles!worker_id in the query
+export interface TokenWorker {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
 export type TokenState =
   | {
       status: "valid";
-      job: Pick<
-        Job,
-        "id" | "title" | "description" | "status" | "location" | "created_at"
-      >;
+      job: Pick<Job, "id" | "title" | "description" | "status"> & {
+        worker?: TokenWorker;
+      };
     }
   | { status: "invalid"; reason: string }
-  | { status: "consumed"; usedAt: string };
+  | { status: "consumed"; reason: string };
 
 // ── Resolver ──────────────────────────────────────────────────────────────────
 
 export async function resolveToken(token: string): Promise<TokenState> {
-  // ── MOCK — replace with real fetch when endpoint exists ──────────────────
-  await new Promise<void>((r) => setTimeout(r, 40)); // simulate latency
+  if (!token) {
+    return { status: "invalid", reason: "Token is required." };
+  }
 
-  if (token === "demo-valid") {
+  let res: Response;
+  try {
+    res = await fetch(`/api/verify/${encodeURIComponent(token)}`, {
+      // No auth header needed — endpoint is public
+      cache: "no-store",
+    });
+  } catch {
+    return { status: "invalid", reason: "Network error — could not reach server." };
+  }
+
+  // Rate limited
+  if (res.status === 429) {
+    return { status: "invalid", reason: "Too many requests. Please try again shortly." };
+  }
+
+  const json = await res.json().catch(() => ({ error: "Unexpected server response" }));
+
+  if (res.ok) {
+    // 200: valid token, job returned
+    const { job } = (json as { data: { job: unknown } }).data as {
+      data: {
+        job: {
+          id: string;
+          title: string;
+          description: string | null;
+          status: string;
+          profiles?: TokenWorker; // aliased from profiles!worker_id
+        };
+      };
+    }["data"];
+
     return {
       status: "valid",
       job: {
-        id: "seed-job-001",
-        title: "Plumbing Repair — Kitchen Sink",
-        description:
-          "Replaced the U-bend and fixed a slow drain on the kitchen sink. Work completed in under 2 hours.",
-        status: "completed",
-        location: "Mumbai, Maharashtra",
-        created_at: "2026-09-01T10:00:00.000Z",
+        id: job.id,
+        title: job.title,
+        description: job.description,
+        status: job.status as Job["status"],
+        worker: job.profiles ?? undefined,
       },
     };
   }
 
-  if (token === "demo-consumed") {
-    return { status: "consumed", usedAt: "2026-09-10T14:32:00.000Z" };
+  // Non-2xx — parse the error message
+  const errorMsg: string =
+    (json as { error?: string }).error ?? "Unknown error";
+
+  if (
+    errorMsg === "Token already consumed" ||
+    errorMsg.toLowerCase().includes("consumed")
+  ) {
+    return { status: "consumed", reason: errorMsg };
   }
 
-  return { status: "invalid", reason: "Token not found or has expired." };
-  // ── END MOCK ──────────────────────────────────────────────────────────────
+  // Invalid token (404), expired (400 "Token expired"), or anything else
+  return { status: "invalid", reason: errorMsg };
 }

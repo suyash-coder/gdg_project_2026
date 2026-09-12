@@ -1,15 +1,23 @@
+"use client";
+
 /**
  * TokenResult — displays the outcome of resolving a verification token.
  *
- * Three states per the task scope:
- *  - valid    → show job details
+ * Three states from GET /api/verify/[token]:
+ *  - valid    → job details + AttestationForm + (post-attestation) PhotoConsentForm
  *  - invalid  → clean error state
  *  - consumed → already-used notice
  *
- * Attestation submission is explicitly OUT OF SCOPE for checkpoint 1.
+ * After successful attestation:
+ *  - AttestationForm shows a confirmed-submitted state (no re-submission)
+ *  - PhotoConsentForm is shown as a distinct, optional next step
+ *  - Backend independently enforces UNIQUE(job_id) + consumed_at
  */
 
+import { useState } from "react";
 import type { TokenState } from "@/lib/customer/tokens";
+import { AttestationForm } from "@/components/customer/AttestationForm";
+import { PhotoConsentForm } from "@/components/customer/PhotoConsentForm";
 
 interface TokenResultProps {
   tokenState: TokenState;
@@ -17,13 +25,13 @@ interface TokenResultProps {
 }
 
 export function TokenResult({ tokenState, rawToken }: TokenResultProps) {
+  // Track attestation completion to show consent step
+  const [attestedJobId, setAttestedJobId] = useState<string | null>(null);
+  const [consentDone, setConsentDone] = useState(false);
+
+  // ── Valid ─────────────────────────────────────────────────────────────────
   if (tokenState.status === "valid") {
     const { job } = tokenState;
-    const date = new Date(job.created_at).toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
 
     return (
       <div style={card}>
@@ -42,36 +50,74 @@ export function TokenResult({ tokenState, rawToken }: TokenResultProps) {
         >
           <span style={{ fontSize: 28 }} aria-hidden>✅</span>
           <div>
-            <p
-              style={{ margin: 0, fontWeight: 700, color: "#15803d", fontSize: 16 }}
-            >
+            <p style={{ margin: 0, fontWeight: 700, color: "#15803d", fontSize: 16 }}>
               Valid Verification Token
             </p>
             <p style={{ margin: "2px 0 0", fontSize: 13, color: "#166534" }}>
-              Token authenticated · Job details below
+              Token authenticated · Review job details below
             </p>
           </div>
         </div>
 
-        {/* Job details */}
-        <section>
-          <h1
+        {/* Worker info (if available from the joined query) */}
+        {job.worker && (
+          <div
             style={{
-              margin: "0 0 8px",
-              fontSize: 22,
-              fontWeight: 700,
-              color: "#1e293b",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 20,
+              padding: "12px 16px",
+              background: "#f8fafc",
+              borderRadius: 8,
+              border: "1px solid #e2e8f0",
             }}
           >
+            {job.worker.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={job.worker.avatar_url}
+                alt="Worker avatar"
+                width={36}
+                height={36}
+                style={{ borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#fff",
+                  flexShrink: 0,
+                }}
+              >
+                {(job.worker.display_name ?? "?")[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+            <div>
+              <p style={{ margin: 0, fontWeight: 600, color: "#1e293b", fontSize: 14 }}>
+                {job.worker.display_name ?? "Worker"}
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>Verified worker</p>
+            </div>
+          </div>
+        )}
+
+        {/* Job details */}
+        <section>
+          <h1 style={{ margin: "0 0 10px", fontSize: 22, fontWeight: 700, color: "#1e293b" }}>
             {job.title}
           </h1>
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
             <span style={badge("blue")}>{job.status.replace("_", " ")}</span>
-            {job.location && (
-              <span style={badge("gray")}>📍 {job.location}</span>
-            )}
-            <span style={badge("gray")}>📅 {date}</span>
           </div>
 
           {job.description && (
@@ -85,32 +131,72 @@ export function TokenResult({ tokenState, rawToken }: TokenResultProps) {
           </p>
         </section>
 
+        {/* Attestation form — hidden after consent is done */}
+        {!consentDone && (
+          <AttestationForm
+            jobId={job.id}
+            rawToken={rawToken}
+            onSuccess={(id) => setAttestedJobId(id)}
+          />
+        )}
+
+        {/* Photo consent — shown only after successful attestation */}
+        {attestedJobId && !consentDone && (
+          <PhotoConsentForm
+            jobId={job.id}
+            onDone={() => setConsentDone(true)}
+          />
+        )}
+
+        {/* Final confirmation after both steps done */}
+        {consentDone && (
+          <div
+            style={{
+              marginTop: 24,
+              padding: "16px 20px",
+              background: "#f0fdf4",
+              border: "1px solid #bbf7d0",
+              borderRadius: 10,
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: 700, color: "#15803d" }}>
+              🎉 All done!
+            </p>
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#166534" }}>
+              Attestation recorded and photo consent preference saved.
+            </p>
+          </div>
+        )}
+
         <div style={footerNote}>
-          <span aria-hidden>ℹ️</span>
-          Attestation submission is coming in a future release.
+          <span aria-hidden>🔒</span>
+          Verification powered by WorkProof · Private evidence is never exposed here
         </div>
       </div>
     );
   }
 
+  // ── Consumed ─────────────────────────────────────────────────────────────
   if (tokenState.status === "consumed") {
-    const usedDate = new Date(tokenState.usedAt).toLocaleString("en-IN");
     return (
       <div style={card}>
-        <div style={{ ...statusHeader, background: "#fefce8", border: "1px solid #fde68a" }}>
+        <div
+          style={{ ...statusHeader, background: "#fefce8", border: "1px solid #fde68a" }}
+        >
           <span style={{ fontSize: 28 }} aria-hidden>⚠️</span>
           <div>
             <p style={{ margin: 0, fontWeight: 700, color: "#92400e", fontSize: 16 }}>
               Token Already Used
             </p>
             <p style={{ margin: "2px 0 0", fontSize: 13, color: "#78350f" }}>
-              This verification link was consumed on {usedDate}
+              {tokenState.reason}
             </p>
           </div>
         </div>
         <p style={{ margin: "16px 0 0", fontSize: 14, color: "#64748b", lineHeight: 1.6 }}>
-          Each verification token can only be used once. If you believe this is
-          an error, please contact the worker to generate a new link.
+          Each verification token can only be used once. Once an attestation is
+          submitted the token is consumed and cannot be reused. If you believe
+          this is an error, contact the worker to generate a new link.
         </p>
         <div style={footerNote}>
           <span aria-hidden>🔒</span>
@@ -120,10 +206,12 @@ export function TokenResult({ tokenState, rawToken }: TokenResultProps) {
     );
   }
 
-  // status === "invalid"
+  // ── Invalid ───────────────────────────────────────────────────────────────
   return (
     <div style={card}>
-      <div style={{ ...statusHeader, background: "#fff1f2", border: "1px solid #fecdd3" }}>
+      <div
+        style={{ ...statusHeader, background: "#fff1f2", border: "1px solid #fecdd3" }}
+      >
         <span style={{ fontSize: 28 }} aria-hidden>❌</span>
         <div>
           <p style={{ margin: 0, fontWeight: 700, color: "#9f1239", fontSize: 16 }}>
@@ -149,7 +237,7 @@ export function TokenResult({ tokenState, rawToken }: TokenResultProps) {
 // ── Style helpers ────────────────────────────────────────────────────────────
 
 const card: React.CSSProperties = {
-  maxWidth: 600,
+  maxWidth: 640,
   margin: "48px auto",
   padding: "32px 36px",
   background: "#ffffff",
@@ -178,9 +266,7 @@ const footerNote: React.CSSProperties = {
   gap: 6,
 };
 
-function badge(
-  color: "blue" | "gray"
-): React.CSSProperties {
+function badge(color: "blue" | "gray"): React.CSSProperties {
   const palettes = {
     blue: { bg: "#eff6ff", border: "#bfdbfe", text: "#1d4ed8" },
     gray: { bg: "#f8fafc", border: "#e2e8f0", text: "#475569" },

@@ -3,20 +3,13 @@
  *
  * Route: /customer/verify/[token]
  *
- * Server Component — resolves the token and renders the appropriate state.
+ * Server Component — resolves the token via GET /api/verify/[token] and
+ * passes the result to TokenResult (Client Component) for rendering.
  *
- * Three states (per scope):
- *   valid    → job details displayed
- *   invalid  → clean error state
+ * Three states from the real endpoint:
+ *   valid    → job details + attestation form + photo consent step
  *   consumed → already-used notice
- *
- * CONTRACT GAP: No real token resolution API exists yet.
- * See src/lib/customer/tokens.ts for the integration point.
- *
- * Demo URLs:
- *   /customer/verify/demo-valid    → valid token with job details
- *   /customer/verify/demo-consumed → already consumed token
- *   /customer/verify/anything-else → invalid/not-found token
+ *   invalid  → clean error state (not found / expired / rate limited)
  */
 
 import { TokenResult } from "@/components/customer/TokenResult";
