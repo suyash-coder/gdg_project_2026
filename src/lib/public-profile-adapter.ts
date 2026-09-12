@@ -8,7 +8,11 @@
  * Once Worker 3 defines the contract, this adapter will be updated.
  */
 
-export function getCanonicalPublicProfileUrl(_workerId: string): string | null {
-  // Returns null to honestly indicate the canonical URL is currently undefined.
-  return null;
+export function getCanonicalPublicProfileUrl(workerId: string): string {
+  return `/public/worker/${workerId}`;
+}
+
+export function getAbsolutePublicProfileUrl(workerId: string): string {
+  if (typeof window === "undefined") return "";
+  return `${window.location.origin}/public/worker/${workerId}`;
 }

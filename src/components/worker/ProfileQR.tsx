@@ -1,41 +1,60 @@
 "use client";
 
-/**
- * Phase 5 Integration Boundary: Profile QR
- * 
- * Strict Requirement:
- * - "A visual placeholder is NOT a working QR. If a genuine QR cannot be implemented without a 
- *    dependency approval, leave the feature at a clearly documented integration boundary rather 
- *    than pretending a placeholder is scannable."
- * - Requires an approved QR dependency (e.g., qrcode.react) which is not in package.json.
- */
+import { useState, useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { getAbsolutePublicProfileUrl } from "@/lib/public-profile-adapter";
 
 interface ProfileQRProps {
   workerId: string;
 }
 
-export default function ProfileQR({ workerId: _workerId }: ProfileQRProps) {
+export default function ProfileQR({ workerId }: ProfileQRProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const url = mounted ? getAbsolutePublicProfileUrl(workerId) : "";
+
+  if (!url) {
+    return (
+      <div style={{ ...styles.boundaryCard, height: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <span style={{ color: "var(--muted)", fontSize: "14px" }}>Loading QR...</span>
+      </div>
+    );
+  }
+
   return (
-    <div style={styles.boundaryCard}>
-      <p style={styles.boundaryText}>
-        <strong>QR Feature Blocked</strong><br/>
-        Missing approved dependency (e.g., <code>qrcode.react</code>) and Canonical URL definition.
-      </p>
+    <div style={styles.container}>
+      <QRCodeSVG
+        value={url}
+        size={200}
+        bgColor={"#ffffff"}
+        fgColor={"#000000"}
+        level={"L"}
+        includeMargin={false}
+      />
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  container: {
+    padding: "16px",
+    background: "#ffffff",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   boundaryCard: {
     padding: "24px",
     background: "rgba(0, 0, 0, 0.02)",
     border: "1px dashed var(--border)",
     borderRadius: "var(--radius)",
     textAlign: "center",
-  },
-  boundaryText: {
-    fontSize: "13px",
-    color: "var(--muted)",
-    lineHeight: "1.5",
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getCanonicalPublicProfileUrl } from "@/lib/public-profile-adapter";
+import { useState, useEffect } from "react";
+import { getAbsolutePublicProfileUrl } from "@/lib/public-profile-adapter";
 import ProfileQR from "./ProfileQR";
 import { generateDigitalCV } from "@/lib/cv-generator";
 
@@ -18,9 +18,14 @@ interface ShareProfileProps {
 
 export default function ShareProfile({ workerId }: ShareProfileProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   
-  // The canonical URL might be null if Worker 3 hasn't defined it yet.
-  const url = getCanonicalPublicProfileUrl(workerId);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const url = mounted ? getAbsolutePublicProfileUrl(workerId) : "";
 
   const handleShareClick = async () => {
     setErrorMsg(null);
