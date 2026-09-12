@@ -1,12 +1,32 @@
+/* WorkProof — Global CSS */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --muted: #6b7280;
+  --muted-bg: #f3f4f6;
+  --border: #e5e7eb;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-fg: #ffffff;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --success: #16a34a;
+  --warning: #ca8a04;
+  --radius: 8px;
+  --radius-sm: 4px;
+  --nav-height: 56px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --muted: #9ca3af;
+    --muted-bg: #1f2937;
+    --border: #374151;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
   }
 }
 
@@ -45,5 +65,11 @@ a {
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
